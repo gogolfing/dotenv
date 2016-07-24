@@ -1,6 +1,9 @@
 package dotenv
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestNewSourcer(t *testing.T) {
 	s := NewSourcer()
@@ -38,17 +41,31 @@ func TestSourcer_NameVar(t *testing.T) {
 				{"=", "", "", ErrEmptyName("=")},
 				{" = ", "", "", ErrEmptyName(" = ")},
 				{"=a", "", "", ErrEmptyName("=a")},
-				//other errors here.
-				{"a= ", "a", "", ErrInvalidWhitespaceVariablePrefix(" ")},
+				{"a= b", "a", "", ErrInvalidWhitespaceVariablePrefix(" b")},
+				{`a="`, "a", "", &ErrVariableUnclosedQuote{`"`, `"`}},
+				{`a="  b`, "a", "", &ErrVariableUnclosedQuote{`"  b`, `"`}},
 
-				//space before export
+				{"export =", "", "", ErrEmptyName("export =")},
+				{"export  = ", "", "", ErrEmptyName("export  = ")},
+				{"export =a", "", "", ErrEmptyName("export =a")},
+				{"export a= b", "a", "", ErrInvalidWhitespaceVariablePrefix(" b")},
+				{`export a="`, "a", "", &ErrVariableUnclosedQuote{`"`, `"`}},
+				{`export a="  b`, "a", "", &ErrVariableUnclosedQuote{`"  b`, `"`}},
+
+				{"a=", "a", "", nil},
+				{"a= ", "a", "", nil},
+				//more success here.
+
+				//all success with export.
+
+				//space before export is error.
 			},
 		},
 	}
 	for testIndex, test := range tests {
 		for caseIndex, nvc := range test.cases {
 			name, v, err := test.sourcer.NameVar(nvc.line)
-			if name != nvc.name || v != nvc.v || err != nvc.err {
+			if name != nvc.name || v != nvc.v || !reflect.DeepEqual(err, nvc.err) {
 				t.Errorf(
 					"%v, %v test.sourcer.NameVar(%v) = %q, %q, %v WANT %q, %q, %v",
 					testIndex,

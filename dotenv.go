@@ -34,13 +34,13 @@ func (e ErrInvalidWhitespaceVariablePrefix) Error() string {
 	return fmt.Sprintf("invalid whitespace at beginning of variable %q", string(e))
 }
 
-type ErrVariableIsQuote struct {
+type ErrVariableUnclosedQuote struct {
 	Variable string
 	Quote    string
 }
 
-func (e *ErrVariableIsQuote) Error() string {
-	return fmt.Sprintf("variable %q cannot be the quote %q", e.Variable, e.Quote)
+func (e *ErrVariableUnclosedQuote) Error() string {
+	return fmt.Sprintf("variable %q cannot start with unclosed quote %q", e.Variable, e.Quote)
 }
 
 type ErrNonVariableLine string
@@ -106,8 +106,9 @@ func (s *Sourcer) Source(in io.Reader) error {
 }
 
 func (s *Sourcer) NameVar(line string) (name, v string, err error) {
-	//check for s.Export at beginning of line.
 	origLine := line
+
+	//check for s.Export at beginning of line.
 	if strings.HasPrefix(line, s.Export) {
 		line = strings.TrimPrefix(line, s.Export)
 		line = strings.TrimLeft(line, SpaceTab)
@@ -127,7 +128,7 @@ func (s *Sourcer) NameVar(line string) (name, v string, err error) {
 	}
 
 	//get name and varible parts of the line. trim the name.
-	name, v = strings.Trim(line[:equalIndex], SpaceTab), line[:equalIndex+1]
+	name, v = strings.Trim(line[:equalIndex], SpaceTab), line[equalIndex+1:]
 	if len(name) == 0 {
 		return "", "", ErrEmptyName(origLine)
 	}
@@ -141,26 +142,36 @@ func (s *Sourcer) NameVar(line string) (name, v string, err error) {
 	return name, v, err
 }
 
+//fixVariable returns the actual variable value to set parsed from v.
+//v should be the remainder of a line after the first equal sign.
+//It may contain a comment.
 func (s *Sourcer) fixVariable(v string) (string, error) {
-	trimmed := strings.TrimLeft(v, SpaceTab)
-	if trimmed != v {
-		return "", ErrInvalidWhitespaceVariablePrefix(v)
-	}
+	origV := v
+
+	//if v is empty, then just return the empty string and no error.
 	if len(v) == 0 {
 		return v, nil
 	}
-	if v == s.Quote {
-		return "", &ErrVariableIsQuote{v, s.Quote}
-	}
+
+	//if v starts with s.Quote, then assume it either ends with one and unquote
+	//or v should be returned literally.
 	if strings.HasPrefix(v, s.Quote) {
-		if strings.HasSuffix(v, s.Quote) {
+		//if starts and ends with quote but not equal to quote.
+		if strings.HasSuffix(v, s.Quote) && v != s.Quote {
 			return s.Unquote(v[len(s.Quote) : len(v)-len(s.Quote)])
 		}
+		return "", &ErrVariableUnclosedQuote{origV, s.Quote}
 	}
+
 	commentIndex := strings.Index(v, s.Comment)
-	if commentIndex < 0 {
-		return v, nil
+	if commentIndex >= 0 {
+		v = v[:commentIndex]
 	}
-	v = strings.TrimRight(v[:commentIndex], SpaceTab)
+	v = strings.TrimRight(v, SpaceTab)
+
+	if v != strings.TrimLeft(v, SpaceTab) {
+		return "", ErrInvalidWhitespaceVariablePrefix(origV)
+	}
+
 	return v, nil
 }
