@@ -55,6 +55,15 @@ func (e ErrEmptyName) Error() string {
 	return fmt.Sprintf("line contains an empty name %q", string(e))
 }
 
+type ErrCommentInName struct {
+	Name    string
+	Comment string
+}
+
+func (e ErrCommentInName) Error() string {
+	return fmt.Sprintf("name %q contains comment %q", e.Name, e.Comment)
+}
+
 var ErrEmptyLine = errors.New("empty line")
 
 type Sourcer struct {
@@ -64,7 +73,7 @@ type Sourcer struct {
 	Unquote func(s string) (t string, err error)
 }
 
-func NewSourcer() *Sourcer {
+func New() *Sourcer {
 	return &Sourcer{
 		Comment: DefaultComment,
 		Quote:   DefaultQuote,
@@ -108,8 +117,11 @@ func (s *Sourcer) Source(in io.Reader) error {
 func (s *Sourcer) NameVar(line string) (name, v string, err error) {
 	origLine := line
 
+	//get rid of any whitespace at the start of the line. doesn't really matter.
+	line = strings.TrimLeft(line, SpaceTab)
+
 	//check for s.Export at beginning of line.
-	if strings.HasPrefix(line, s.Export) {
+	if strings.HasPrefix(line, s.Export) && s.Export != "" {
 		line = strings.TrimPrefix(line, s.Export)
 		line = strings.TrimLeft(line, SpaceTab)
 		if len(line) == 0 || strings.HasPrefix(line, s.Comment) {
@@ -128,13 +140,15 @@ func (s *Sourcer) NameVar(line string) (name, v string, err error) {
 	}
 
 	//get name and varible parts of the line. trim the name.
-	name, v = strings.Trim(line[:equalIndex], SpaceTab), line[equalIndex+1:]
+	name, v = strings.TrimLeft(line[:equalIndex], SpaceTab), line[equalIndex+1:]
 	if len(name) == 0 {
-		return "", "", ErrEmptyName(origLine)
+		fmt.Println("what the FUCK", origLine, name, len(name), v)
+		return name, "", ErrEmptyName(origLine)
 	}
+
 	//if a comment appears in name (before Equal) then it is a comment line.
-	if strings.Contains(name, s.Comment) {
-		return "", "", ErrEmptyLine
+	if strings.Contains(name, s.Comment) && s.Comment != "" {
+		return "", "", &ErrCommentInName{name, s.Comment}
 	}
 
 	//fix and return variable part with possible error.
@@ -158,7 +172,7 @@ func (s *Sourcer) fixVariable(v string) (string, error) {
 	if strings.HasPrefix(v, s.Quote) {
 		//if starts and ends with quote but not equal to quote.
 		if strings.HasSuffix(v, s.Quote) && v != s.Quote {
-			return s.Unquote(v[len(s.Quote) : len(v)-len(s.Quote)])
+			return s.Unquote(v)
 		}
 		return "", &ErrVariableUnclosedQuote{origV, s.Quote}
 	}
