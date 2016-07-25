@@ -49,6 +49,7 @@ func (e ErrNonVariableLine) Error() string {
 	return fmt.Sprintf("line does not contain a variable definition %q", string(e))
 }
 
+/*
 type ErrEmptyName string
 
 func (e ErrEmptyName) Error() string {
@@ -62,6 +63,13 @@ type ErrCommentInName struct {
 
 func (e ErrCommentInName) Error() string {
 	return fmt.Sprintf("name %q contains comment %q", e.Name, e.Comment)
+}
+*/
+
+type ErrInvalidName string
+
+func (e ErrInvalidName) Error() string {
+	return fmt.Sprintf("name %q is invalid", string(e))
 }
 
 var ErrEmptyLine = errors.New("empty line")
@@ -141,19 +149,26 @@ func (s *Sourcer) NameVar(line string) (name, v string, err error) {
 
 	//get name and varible parts of the line. trim the name.
 	name, v = strings.TrimLeft(line[:equalIndex], SpaceTab), line[equalIndex+1:]
-	if len(name) == 0 {
-		fmt.Println("what the FUCK", origLine, name, len(name), v)
-		return name, "", ErrEmptyName(origLine)
+
+	//evaluate name for errors.
+	if s.isNameInvalid(name) {
+		return "", "", ErrInvalidName(name)
 	}
 
 	//if a comment appears in name (before Equal) then it is a comment line.
 	if strings.Contains(name, s.Comment) && s.Comment != "" {
-		return "", "", &ErrCommentInName{name, s.Comment}
+		return "", "", ErrInvalidName(name)
 	}
 
 	//fix and return variable part with possible error.
 	v, err = s.fixVariable(v)
 	return name, v, err
+}
+
+func (s *Sourcer) isNameInvalid(name string) bool {
+	return len(name) == 0 ||
+		strings.ContainsAny(name, SpaceTab) ||
+		(strings.Contains(name, s.Comment) && s.Comment != "")
 }
 
 //fixVariable returns the actual variable value to set parsed from v.
