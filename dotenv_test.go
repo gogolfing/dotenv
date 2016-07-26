@@ -18,147 +18,159 @@ func TestNewSourcer(t *testing.T) {
 	}
 }
 
-func TestSourcer_NameVar(t *testing.T) {
-	tests := []struct {
-		sourcer *Sourcer
-		cases   []*nameVarCase
-	}{
-		{
-			//default sourcer.
-			New(),
-			[]*nameVarCase{
-				{"", "", "", ErrEmptyLine},
-				{SpaceTab, "", "", ErrEmptyLine},
-				{"#comment", "", "", ErrEmptyLine},
-				{SpaceTab + "#comment", "", "", ErrEmptyLine},
-				{"a", "", "", ErrNonVariableLine("a")},
+func TestSourcer_SourceFile(t *testing.T) {
+}
 
-				{"export", "", "", ErrNonVariableLine("export")},
-				{"export" + SpaceTab, "", "", ErrNonVariableLine("export" + SpaceTab)},
-				{"export#comment", "", "", ErrNonVariableLine("export#comment")},
-				{"export \t#comment", "", "", ErrNonVariableLine("export \t#comment")},
-				{"export a", "", "", ErrNonVariableLine("export a")},
+func TestSourcer_Source_success(t *testing.T) {
+}
 
-				{"=", "", "", ErrInvalidName("")},
-				{" = ", "", "", ErrInvalidName("")},
-				{"=a", "", "", ErrInvalidName("")},
-				{"a= b", "a", "", ErrInvalidWhitespaceVariablePrefix(" b")},
-				{`a="`, "a", "", &ErrVariableUnclosedQuote{`"`, `"`}},
-				{`a="  b`, "a", "", &ErrVariableUnclosedQuote{`"  b`, `"`}},
-				{"a#b=value", "", "", ErrInvalidName("a#b")},
+func TestSourcer_Source_error(t *testing.T) {
+}
 
-				{"export =", "", "", ErrInvalidName("")},
-				{"export  = ", "", "", ErrInvalidName("")},
-				{"export =a", "", "", ErrInvalidName("")},
-				{"export a= b", "a", "", ErrInvalidWhitespaceVariablePrefix(" b")},
-				{`export a="`, "a", "", &ErrVariableUnclosedQuote{`"`, `"`}},
-				{`export a="  b`, "a", "", &ErrVariableUnclosedQuote{`"  b`, `"`}},
+func TestSourcer_NameVar_default(t *testing.T) {
+	testSourcerNameVarCases(
+		t,
+		New(),
+		[]*nameVarCase{
+			{"", "", "", ErrEmptyLine},
+			{SpaceTab, "", "", ErrEmptyLine},
+			{"#comment", "", "", ErrEmptyLine},
+			{SpaceTab + "#comment", "", "", ErrEmptyLine},
+			{"a", "", "", ErrNonVariableLine("a")},
 
-				{"a=", "a", "", nil},
-				{"a= ", "a", "", nil},
-				{"a=#", "a", "", nil},
-				{"a= #", "a", "", nil},
-				{"a=b", "a", "b", nil},
-				{"a=b ", "a", "b", nil},
-				{"a=b  c", "a", "b  c", nil},
-				{`abcd="foobar"`, "abcd", "foobar", nil},
-				{`A_B_C_D="foo\nbar"`, "A_B_C_D", "foo\nbar", nil},
+			{"export", "", "", ErrNonVariableLine("export")},
+			{"export" + SpaceTab, "", "", ErrNonVariableLine("export" + SpaceTab)},
+			{"export#comment", "", "", ErrNonVariableLine("export#comment")},
+			{"export \t#comment", "", "", ErrNonVariableLine("export \t#comment")},
+			{"export a", "", "", ErrNonVariableLine("export a")},
 
-				{"export a=", "a", "", nil},
-				{"export  a= ", "a", "", nil},
-				{"export \t\ta=#", "a", "", nil},
-				{"export a= #", "a", "", nil},
-				{"export a=b", "a", "b", nil},
-				{"export a=b ", "a", "b", nil},
-				{"export a=b  c", "a", "b  c", nil},
-				{`export abcd="foobar"`, "abcd", "foobar", nil},
-				{`export A_B_C_D="foo\nbar"`, "A_B_C_D", "foo\nbar", nil},
+			{"=", "", "", ErrInvalidName("")},
+			{" = ", "", "", ErrInvalidName("")},
+			{"=a", "", "", ErrInvalidName("")},
+			{"a= b", "a", "", ErrInvalidWhitespaceVariablePrefix(" b")},
+			{`a="`, "a", "", &ErrVariableUnclosedQuote{`"`, `"`}},
+			{`a="  b`, "a", "", &ErrVariableUnclosedQuote{`"  b`, `"`}},
+			{"a#b=value", "", "", ErrInvalidName("a#b")},
 
-				{" export a=", "a", "", nil},
-				{"  export  a= ", "a", "", nil},
-				{" \t\texport \t\ta=#", "a", "", nil},
-				{" export a= #", "a", "", nil},
-				{" export a=b", "a", "b", nil},
-				{" export a=b ", "a", "b", nil},
-				{" export a=b  c", "a", "b  c", nil},
-				{` export abcd="foobar"`, "abcd", "foobar", nil},
-				{` export A_B_C_D="foo\nbar"`, "A_B_C_D", "foo\nbar", nil},
-			},
+			{"export =", "", "", ErrInvalidName("")},
+			{"export  = ", "", "", ErrInvalidName("")},
+			{"export =a", "", "", ErrInvalidName("")},
+			{"export a= b", "a", "", ErrInvalidWhitespaceVariablePrefix(" b")},
+			{`export a="`, "a", "", &ErrVariableUnclosedQuote{`"`, `"`}},
+			{`export a="  b`, "a", "", &ErrVariableUnclosedQuote{`"  b`, `"`}},
+
+			{"a=", "a", "", nil},
+			{"a= ", "a", "", nil},
+			{"a=#", "a", "", nil},
+			{"a= #", "a", "", nil},
+			{"a=b", "a", "b", nil},
+			{"a=b ", "a", "b", nil},
+			{"a=b  c", "a", "b  c", nil},
+			{`abcd="foobar"`, "abcd", "foobar", nil},
+			{`A_B_C_D="foo\nbar"`, "A_B_C_D", "foo\nbar", nil},
+
+			{"export a=", "a", "", nil},
+			{"export  a= ", "a", "", nil},
+			{"export \t\ta=#", "a", "", nil},
+			{"export a= #", "a", "", nil},
+			{"export a=b", "a", "b", nil},
+			{"export a=b ", "a", "b", nil},
+			{"export a=b  c", "a", "b  c", nil},
+			{`export abcd="foobar"`, "abcd", "foobar", nil},
+			{`export A_B_C_D="foo\nbar"`, "A_B_C_D", "foo\nbar", nil},
+
+			{" export a=", "a", "", nil},
+			{"  export  a= ", "a", "", nil},
+			{" \t\texport \t\ta=#", "a", "", nil},
+			{" export a= #", "a", "", nil},
+			{" export a=b", "a", "b", nil},
+			{" export a=b ", "a", "b", nil},
+			{" export a=b  c", "a", "b  c", nil},
+			{` export abcd="foobar"`, "abcd", "foobar", nil},
+			{` export A_B_C_D="foo\nbar"`, "A_B_C_D", "foo\nbar", nil},
 		},
-		{
-			func() *Sourcer {
-				s := New()
-				s.Export = ""
-				return s
-			}(),
-			[]*nameVarCase{
-				{"", "", "", ErrEmptyLine},
-				{SpaceTab, "", "", ErrEmptyLine},
-				{"#comment", "", "", ErrEmptyLine},
-				{SpaceTab + "#comment", "", "", ErrEmptyLine},
-				{"a", "", "", ErrNonVariableLine("a")},
+	)
+}
 
-				{"export", "", "", ErrNonVariableLine("export")},
-				{"export" + SpaceTab, "", "", ErrNonVariableLine("export" + SpaceTab)},
-				{"export#comment", "", "", ErrNonVariableLine("export#comment")},
-				{"export \t#comment", "", "", ErrNonVariableLine("export \t#comment")},
-				{"export a", "", "", ErrNonVariableLine("export a")},
+func TestSourcer_NameVar_emptyExport(t *testing.T) {
+	s := New()
+	s.Export = ""
+	testSourcerNameVarCases(
+		t,
+		s,
+		[]*nameVarCase{
+			{"", "", "", ErrEmptyLine},
+			{SpaceTab, "", "", ErrEmptyLine},
+			{"#comment", "", "", ErrEmptyLine},
+			{SpaceTab + "#comment", "", "", ErrEmptyLine},
+			{"a", "", "", ErrNonVariableLine("a")},
 
-				{"=", "", "", ErrInvalidName("")},
-				{" = ", "", "", ErrInvalidName("")},
-				{"=a", "", "", ErrInvalidName("")},
-				{"a= b", "a", "", ErrInvalidWhitespaceVariablePrefix(" b")},
-				{`a="`, "a", "", &ErrVariableUnclosedQuote{`"`, `"`}},
-				{`a="  b`, "a", "", &ErrVariableUnclosedQuote{`"  b`, `"`}},
-				{"a#b=value", "", "", ErrInvalidName("a#b")},
+			{"export", "", "", ErrNonVariableLine("export")},
+			{"export" + SpaceTab, "", "", ErrNonVariableLine("export" + SpaceTab)},
+			{"export#comment", "", "", ErrNonVariableLine("export#comment")},
+			{"export \t#comment", "", "", ErrNonVariableLine("export \t#comment")},
+			{"export a", "", "", ErrNonVariableLine("export a")},
 
-				{"export =", "", "", ErrInvalidName("export ")},
-				{"export  = ", "", "", ErrInvalidName("export  ")},
-				{"export =a", "", "", ErrInvalidName("export ")},
-				{"export a= b", "", "", ErrInvalidName("export a")},
-				{`export a="`, "", "", ErrInvalidName("export a")},
-				{`export a="  b`, "", "", ErrInvalidName("export a")},
-				{"export a=b", "", "", ErrInvalidName("export a")},
+			{"=", "", "", ErrInvalidName("")},
+			{" = ", "", "", ErrInvalidName("")},
+			{"=a", "", "", ErrInvalidName("")},
+			{"a= b", "a", "", ErrInvalidWhitespaceVariablePrefix(" b")},
+			{`a="`, "a", "", &ErrVariableUnclosedQuote{`"`, `"`}},
+			{`a="  b`, "a", "", &ErrVariableUnclosedQuote{`"  b`, `"`}},
+			{"a#b=value", "", "", ErrInvalidName("a#b")},
 
-				{"a=", "a", "", nil},
-				{"a= ", "a", "", nil},
-				{"a=#", "a", "", nil},
-				{"a= #", "a", "", nil},
-				{"a=b", "a", "b", nil},
-				{"a=b ", "a", "b", nil},
-				{"a=b  c", "a", "b  c", nil},
-				{`abcd="foobar"`, "abcd", "foobar", nil},
-				{`A_B_C_D="foo\nbar"`, "A_B_C_D", "foo\nbar", nil},
+			{"export =", "", "", ErrInvalidName("export ")},
+			{"export  = ", "", "", ErrInvalidName("export  ")},
+			{"export =a", "", "", ErrInvalidName("export ")},
+			{"export a= b", "", "", ErrInvalidName("export a")},
+			{`export a="`, "", "", ErrInvalidName("export a")},
+			{`export a="  b`, "", "", ErrInvalidName("export a")},
+			{"export a=b", "", "", ErrInvalidName("export a")},
 
-				{" a=", "a", "", nil},
-				{"  a= ", "a", "", nil},
-				{" \t\ta=#", "a", "", nil},
-				{" a= #", "a", "", nil},
-				{" a=b", "a", "b", nil},
-				{" a=b ", "a", "b", nil},
-				{" a=b  c", "a", "b  c", nil},
-				{` abcd="foobar"`, "abcd", "foobar", nil},
-				{` A_B_C_D="foo\nbar"`, "A_B_C_D", "foo\nbar", nil},
-			},
+			{"a=", "a", "", nil},
+			{"a= ", "a", "", nil},
+			{"a=#", "a", "", nil},
+			{"a= #", "a", "", nil},
+			{"a=b", "a", "b", nil},
+			{"a=b ", "a", "b", nil},
+			{"a=b  c", "a", "b  c", nil},
+			{`abcd="foobar"`, "abcd", "foobar", nil},
+			{`A_B_C_D="foo\nbar"`, "A_B_C_D", "foo\nbar", nil},
+
+			{" a=", "a", "", nil},
+			{"  a= ", "a", "", nil},
+			{" \t\ta=#", "a", "", nil},
+			{" a= #", "a", "", nil},
+			{" a=b", "a", "b", nil},
+			{" a=b ", "a", "b", nil},
+			{" a=b  c", "a", "b  c", nil},
+			{` abcd="foobar"`, "abcd", "foobar", nil},
+			{` A_B_C_D="foo\nbar"`, "A_B_C_D", "foo\nbar", nil},
 		},
-	}
-	for testIndex, test := range tests {
-		for caseIndex, nvc := range test.cases {
-			name, v, err := test.sourcer.NameVar(nvc.line)
-			if name != nvc.name || v != nvc.v || !reflect.DeepEqual(err, nvc.err) {
-				t.Errorf(
-					"%v, %v test.sourcer.NameVar(%v) = %q, %q, %v WANT %q, %q, %v",
-					testIndex,
-					caseIndex,
-					nvc.line,
-					name,
-					v,
-					err,
-					nvc.name,
-					nvc.v,
-					nvc.err,
-				)
-			}
+	)
+}
+
+func TestSourcer_NameVar_emptyComment(t *testing.T) {
+}
+
+func TestSourcer_NameVar_emptyQuote(t *testing.T) {
+}
+
+func testSourcerNameVarCases(t *testing.T, s *Sourcer, cases []*nameVarCase) {
+	for caseIndex, nvc := range cases {
+		name, v, err := s.NameVar(nvc.line)
+		if name != nvc.name || v != nvc.v || !reflect.DeepEqual(err, nvc.err) {
+			t.Errorf(
+				"%v s.NameVar(%v) = %q, %q, %v WANT %q, %q, %v",
+				caseIndex,
+				nvc.line,
+				name,
+				v,
+				err,
+				nvc.name,
+				nvc.v,
+				nvc.err,
+			)
 		}
 	}
 }

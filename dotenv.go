@@ -49,23 +49,6 @@ func (e ErrNonVariableLine) Error() string {
 	return fmt.Sprintf("line does not contain a variable definition %q", string(e))
 }
 
-/*
-type ErrEmptyName string
-
-func (e ErrEmptyName) Error() string {
-	return fmt.Sprintf("line contains an empty name %q", string(e))
-}
-
-type ErrCommentInName struct {
-	Name    string
-	Comment string
-}
-
-func (e ErrCommentInName) Error() string {
-	return fmt.Sprintf("name %q contains comment %q", e.Name, e.Comment)
-}
-*/
-
 type ErrInvalidName string
 
 func (e ErrInvalidName) Error() string {
@@ -165,6 +148,7 @@ func (s *Sourcer) NameVar(line string) (name, v string, err error) {
 	return name, v, err
 }
 
+//isNameInvalid determines whether or not name is valid in s.
 func (s *Sourcer) isNameInvalid(name string) bool {
 	return len(name) == 0 ||
 		strings.ContainsAny(name, SpaceTab) ||
@@ -192,10 +176,12 @@ func (s *Sourcer) fixVariable(v string) (string, error) {
 		return "", &ErrVariableUnclosedQuote{origV, s.Quote}
 	}
 
+	//if there is a comment, then get rid of it.
 	commentIndex := strings.Index(v, s.Comment)
 	if commentIndex >= 0 {
 		v = v[:commentIndex]
 	}
+	//trim any right whitespace.
 	v = strings.TrimRight(v, SpaceTab)
 
 	if v != strings.TrimLeft(v, SpaceTab) {
