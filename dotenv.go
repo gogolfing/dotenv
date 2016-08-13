@@ -64,7 +64,7 @@ type Sourcer struct {
 	Unquote func(s string) (t string, err error)
 }
 
-func New() *Sourcer {
+func NewSourcer() *Sourcer {
 	return &Sourcer{
 		Comment: DefaultComment,
 		Quote:   DefaultQuote,
@@ -86,19 +86,38 @@ func (s *Sourcer) SourceFile(path string) error {
 
 //not guaranteed to read all of in.
 func (s *Sourcer) Source(in io.Reader) error {
+	return s.sourceVisitor(in, os.Setenv)
+}
+
+//not guaranteed to read all of in.
+func (s *Sourcer) NameVars(in io.Reader) (nameVars [][2]string, err error) {
+	result := [][2]string{}
+	err = s.sourceVisitor(in, func(name, v string) error {
+		result = append(result, [2]string{name, v})
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (s *Sourcer) sourceVisitor(in io.Reader, visit func(name, v string) error) error {
 	lineNumber := 0
 	scanner := bufio.NewScanner(in)
+
 	for scanner.Scan() {
 		line := scanner.Text()
 		lineNumber++
 		name, v, err := s.NameVar(line)
+
 		if err == ErrEmptyLine {
 			continue
 		}
 		if err != nil {
 			return &ErrSourcing{lineNumber, err}
 		}
-		if err := os.Setenv(name, v); err != nil {
+		if err := visit(name, v); err != nil {
 			return &ErrSourcing{lineNumber, err}
 		}
 	}
@@ -124,7 +143,7 @@ func (s *Sourcer) NameVar(line string) (name, v string, err error) {
 	equalIndex := strings.Index(line, "=")
 	if equalIndex < 0 {
 		line = strings.TrimLeft(line, SpaceTab)
-		if len(line) == 0 || strings.HasPrefix(line, s.Comment) {
+		if len(line) == 0 || (strings.HasPrefix(line, s.Comment) && s.Comment != "") {
 			return "", "", ErrEmptyLine
 		}
 		return "", "", ErrNonVariableLine(origLine)
@@ -133,13 +152,13 @@ func (s *Sourcer) NameVar(line string) (name, v string, err error) {
 	//get name and varible parts of the line. trim the name.
 	name, v = strings.TrimLeft(line[:equalIndex], SpaceTab), line[equalIndex+1:]
 
-	//evaluate name for errors.
-	if s.isNameInvalid(name) {
-		return "", "", ErrInvalidName(name)
+	//if a comment appears at the beginning name (before Equal) then it is a comment line.
+	if strings.HasPrefix(strings.TrimLeft(line, SpaceTab), s.Comment) && s.Comment != "" {
+		return "", "", ErrEmptyLine
 	}
 
-	//if a comment appears in name (before Equal) then it is a comment line.
-	if strings.Contains(name, s.Comment) && s.Comment != "" {
+	//evaluate name for errors.
+	if s.isNameInvalid(name) {
 		return "", "", ErrInvalidName(name)
 	}
 
@@ -168,7 +187,7 @@ func (s *Sourcer) fixVariable(v string) (string, error) {
 
 	//if v starts with s.Quote, then assume it either ends with one and unquote
 	//or v should be returned literally.
-	if strings.HasPrefix(v, s.Quote) {
+	if strings.HasPrefix(v, s.Quote) && s.Quote != "" {
 		//if starts and ends with quote but not equal to quote.
 		if strings.HasSuffix(v, s.Quote) && v != s.Quote {
 			return s.Unquote(v)
@@ -178,7 +197,7 @@ func (s *Sourcer) fixVariable(v string) (string, error) {
 
 	//if there is a comment, then get rid of it.
 	commentIndex := strings.Index(v, s.Comment)
-	if commentIndex >= 0 {
+	if commentIndex >= 0 && s.Comment != "" {
 		v = v[:commentIndex]
 	}
 	//trim any right whitespace.
