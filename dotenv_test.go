@@ -28,18 +28,18 @@ func TestErrSourcing_Error(t *testing.T) {
 }
 
 func TestErrInvalidWhitespaceVariablePrefix_Error(t *testing.T) {
-	err := ErrInvalidWhitespaceVariablePrefix(" value")
-	if err.Error() != `invalid whitespace at beginning of variable " value"` {
+	err := ErrInvalidWhitespaceValuePrefix(" value")
+	if err.Error() != `invalid whitespace at beginning of value " value"` {
 		t.Fail()
 	}
 }
 
 func TestErrVariableUnclosedQuote_Error(t *testing.T) {
-	err := &ErrVariableUnclosedQuote{
+	err := &ErrValueUnclosedQuote{
 		Variable: `"value`,
 		Quote:    `"`,
 	}
-	if err.Error() != `variable "\"value" cannot start with unclosed quote "\""` {
+	if err.Error() != `value "\"value" cannot start with unclosed quote "\""` {
 		t.Fail()
 	}
 }
@@ -63,7 +63,7 @@ func TestNewSourcer(t *testing.T) {
 	if s == nil {
 		t.Fail()
 	}
-	if s.Comment != DefaultComment || s.Export != Export || s.Quote != DefaultQuote {
+	if s.Comment != DefaultComment || s.Export != DefaultExport || s.Quote != DefaultQuote {
 		t.Fail()
 	}
 	if s.Unquote == nil {
@@ -192,19 +192,19 @@ func TestSourcer_NameVar_default(t *testing.T) {
 			{"=", "", "", ErrInvalidName("")},
 			{" = ", "", "", ErrInvalidName("")},
 			{"=a", "", "", ErrInvalidName("")},
-			{"a= b", "a", "", ErrInvalidWhitespaceVariablePrefix(" b")},
-			{`a= "b`, "a", "", ErrInvalidWhitespaceVariablePrefix(` "b`)},
-			{`a="`, "a", "", &ErrVariableUnclosedQuote{`"`, `"`}},
-			{`a="  b`, "a", "", &ErrVariableUnclosedQuote{`"  b`, `"`}},
+			{"a= b", "a", "", ErrInvalidWhitespaceValuePrefix(" b")},
+			{`a= "b`, "a", "", ErrInvalidWhitespaceValuePrefix(` "b`)},
+			{`a="`, "a", "", &ErrValueUnclosedQuote{`"`, `"`}},
+			{`a="  b`, "a", "", &ErrValueUnclosedQuote{`"  b`, `"`}},
 			{"a#b=value", "", "", ErrInvalidName("a#b")},
 			{"a b=value", "", "", ErrInvalidName("a b")},
 
 			{"export =", "", "", ErrInvalidName("")},
 			{"export  = ", "", "", ErrInvalidName("")},
 			{"export =a", "", "", ErrInvalidName("")},
-			{"export a= b", "a", "", ErrInvalidWhitespaceVariablePrefix(" b")},
-			{`export a="`, "a", "", &ErrVariableUnclosedQuote{`"`, `"`}},
-			{`export a="  b`, "a", "", &ErrVariableUnclosedQuote{`"  b`, `"`}},
+			{"export a= b", "a", "", ErrInvalidWhitespaceValuePrefix(" b")},
+			{`export a="`, "a", "", &ErrValueUnclosedQuote{`"`, `"`}},
+			{`export a="  b`, "a", "", &ErrValueUnclosedQuote{`"  b`, `"`}},
 
 			{"a=", "a", "", nil},
 			{"a= ", "a", "", nil},
@@ -271,9 +271,9 @@ func TestSourcer_NameVar_emptyExport(t *testing.T) {
 			{"=", "", "", ErrInvalidName("")},
 			{" = ", "", "", ErrInvalidName("")},
 			{"=a", "", "", ErrInvalidName("")},
-			{"a= b", "a", "", ErrInvalidWhitespaceVariablePrefix(" b")},
-			{`a="`, "a", "", &ErrVariableUnclosedQuote{`"`, `"`}},
-			{`a="  b`, "a", "", &ErrVariableUnclosedQuote{`"  b`, `"`}},
+			{"a= b", "a", "", ErrInvalidWhitespaceValuePrefix(" b")},
+			{`a="`, "a", "", &ErrValueUnclosedQuote{`"`, `"`}},
+			{`a="  b`, "a", "", &ErrValueUnclosedQuote{`"  b`, `"`}},
 			{"a#b=value", "", "", ErrInvalidName("a#b")},
 
 			{"export =", "", "", ErrInvalidName("export ")},

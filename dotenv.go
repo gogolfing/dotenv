@@ -127,7 +127,7 @@ func NewSourcer() *Sourcer {
 	return &Sourcer{
 		Comment: DefaultComment,
 		Quote:   DefaultQuote,
-		Export:  Export,
+		Export:  DefaultExport,
 		Unquote: strconv.Unquote,
 	}
 }
