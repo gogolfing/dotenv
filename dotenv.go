@@ -1,3 +1,5 @@
+//Package dotenv provides a Sourcer type that allows client code to source
+//environment variable inputs and set the values in the process via os.Setenv().
 package dotenv
 
 import (
@@ -20,7 +22,8 @@ const (
 	//DefaultExport is the export string set to Sourcer.Export in NewSourcer().
 	DefaultExport = "export"
 
-	//SpaceTab is used in various ways to trim and test certain strings throughout parsing.
+	//SpaceTab is used in various ways to trim and test certain strings throughout
+	//parsing.
 	SpaceTab = " \t"
 )
 
