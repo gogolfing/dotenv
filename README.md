@@ -7,4 +7,4 @@ Provides sourcing environment files to set environment variables.
 [![Go Report Card](https://goreportcard.com/badge/github.com/gogolfing/dotenv)](https://goreportcard.com/report/github.com/gogolfing/dotenv)
 
 ## Documentation and Usage
-Full documentation and usage examples can be found at [![GoDoc](https://godoc.org/github.com/gogolfing/dotenv?status.svg)](https://godoc.org/github.com/gogolfing/dotenv)
+Full documentation and examples can be found at [![GoDoc](https://godoc.org/github.com/gogolfing/dotenv?status.svg)](https://godoc.org/github.com/gogolfing/dotenv)
