@@ -59,7 +59,7 @@ func TestErrInvalidName_Error(t *testing.T) {
 }
 
 func TestNewSourcer(t *testing.T) {
-	s := NewSourcer()
+	s := NewDefault()
 	if s == nil {
 		t.Fail()
 	}
@@ -91,7 +91,7 @@ func TestSourcer_SourceFile(t *testing.T) {
 		t.Error(err)
 	}
 
-	sourcer := NewSourcer()
+	sourcer := NewDefault()
 
 	if err := sourcer.SourceFile(file.Name()); err != nil {
 		t.Error(err)
@@ -109,7 +109,7 @@ func TestSourcer_SourceFile(t *testing.T) {
 }
 
 func TestSourcer_Source_success(t *testing.T) {
-	sourcer := NewSourcer()
+	sourcer := NewDefault()
 
 	if err := sourcer.Source(strings.NewReader(SampleSource)); err != nil {
 		t.Error(err)
@@ -117,7 +117,7 @@ func TestSourcer_Source_success(t *testing.T) {
 }
 
 func TestSourcer_Source_error(t *testing.T) {
-	sourcer := NewSourcer()
+	sourcer := NewDefault()
 
 	line := "export"
 
@@ -136,7 +136,7 @@ func TestSourcer_Source_error(t *testing.T) {
 }
 
 func TestSourcer_NameVars_success(t *testing.T) {
-	sourcer := NewSourcer()
+	sourcer := NewDefault()
 	nameVars, err := sourcer.NameVars(strings.NewReader("name=value"))
 	if err != nil {
 		t.Error(err)
@@ -147,7 +147,7 @@ func TestSourcer_NameVars_success(t *testing.T) {
 }
 
 func TestSourcer_NameVars_error(t *testing.T) {
-	sourcer := NewSourcer()
+	sourcer := NewDefault()
 	nameVars, err := sourcer.NameVars(strings.NewReader("name"))
 	if nameVars != nil || err == nil {
 		t.Fail()
@@ -158,7 +158,7 @@ func TestSourcer_sourceVisitor(t *testing.T) {
 	visitor := func(name, v string) error {
 		return errors.New("visitor error")
 	}
-	sourcer := NewSourcer()
+	sourcer := NewDefault()
 	err := sourcer.sourceVisitor(strings.NewReader("name=value"), visitor)
 	if !reflect.DeepEqual(err, &ErrSourcing{1, errors.New("visitor error")}) {
 		t.Fail()
@@ -168,7 +168,7 @@ func TestSourcer_sourceVisitor(t *testing.T) {
 func TestSourcer_NameVar_default(t *testing.T) {
 	testSourcerNameVarCases(
 		t,
-		NewSourcer(),
+		NewDefault(),
 		[]*nameVarCase{
 			{"", "", "", ErrEmptyLine},
 			{SpaceTab, "", "", ErrEmptyLine},
@@ -243,7 +243,7 @@ func TestSourcer_NameVar_default(t *testing.T) {
 }
 
 func TestSourcer_NameVar_emptyExport(t *testing.T) {
-	s := NewSourcer()
+	s := NewDefault()
 	s.Export = ""
 	testSourcerNameVarCases(
 		t,
@@ -308,7 +308,7 @@ func TestSourcer_NameVar_emptyExport(t *testing.T) {
 }
 
 func TestSourcer_NameVar_emptyComment(t *testing.T) {
-	s := NewSourcer()
+	s := NewDefault()
 	s.Comment = ""
 	testSourcerNameVarCases(
 		t,
@@ -338,7 +338,7 @@ func TestSourcer_NameVar_emptyComment(t *testing.T) {
 }
 
 func TestSourcer_NameVar_emptyQuote(t *testing.T) {
-	s := NewSourcer()
+	s := NewDefault()
 	s.Quote = ""
 	testSourcerNameVarCases(
 		t,
@@ -352,7 +352,7 @@ func TestSourcer_NameVar_emptyQuote(t *testing.T) {
 }
 
 func TestSourcer_NameVar_emptyCommentAndQuote(t *testing.T) {
-	s := NewSourcer()
+	s := NewDefault()
 	s.Quote = ""
 	s.Comment = ""
 	testSourcerNameVarCases(

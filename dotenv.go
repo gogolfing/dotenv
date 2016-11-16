@@ -100,13 +100,11 @@ var ErrEmptyLine = errors.New("empty line")
 type Sourcer struct {
 	//Comment denotes the beginning of a comment on a line.
 	//An empty Comment value means that all commenting is disallowed.
-	//Comment is set to DefaultComment by NewSourcer().
 	Comment string
 
 	//Quote denotes the quote string that is allowed to surround a variable's
 	//value deinition to allow for whitespace, comment, and escaped values.
 	//An empty Quote value means that value quoting is disallowed.
-	//Quote is set to DefaultQuote by NewSourcer().
 	Quote string
 
 	//Export denotes the possible export keyword that can appear at the beginning
@@ -114,19 +112,17 @@ type Sourcer struct {
 	//This is provided so that a valid Bash file with export lines can be sourced
 	//normally within a terminal and parsed correctly by this package.
 	//An empty Export value means that no keyword prefix is allowed.
-	//Export is set to DefaultExport by NewSourcer().
 	Export string
 
 	//Unquote is a function that is called to unquote a variable's value definition
 	//if the value starts and ends with Quote.
 	//It must not be nil if any variables have the surrounding Quotes.
-	//Unquote is set to strconv.Unquote by NewSourcer().
 	Unquote func(s string) (t string, err error)
 }
 
 //NewSourcer returns a Sourcer with Comment, Quote, Export, and Unquote set to
 //DefaultComment, DefaultQuote, DefaultExport, and strconv.Unquote respectively.
-func NewSourcer() *Sourcer {
+func NewDefault() *Sourcer {
 	return &Sourcer{
 		Comment: DefaultComment,
 		Quote:   DefaultQuote,
