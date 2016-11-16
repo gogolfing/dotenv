@@ -17,7 +17,7 @@ name4=value4 # this is a comment
 # this is a comment as well
 `
 
-	sourcer := NewSourcer()
+	sourcer := NewDefault()
 
 	err := sourcer.Source(strings.NewReader(source))
 
